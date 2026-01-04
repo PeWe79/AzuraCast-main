@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\Api\Stations\Streamers\Art;
 
 use App\Controller\SingleActionInterface;
-use App\Entity\Repository\StationRepository;
+use App\Customization;
 use App\Entity\StationStreamer;
 use App\Flysystem\StationFilesystems;
 use App\Http\Response;
@@ -38,10 +38,10 @@ use Psr\Http\Message\ResponseInterface;
         new OpenApi\Response\GenericError(),
     ]
 )]
-final class GetArtAction implements SingleActionInterface
+final readonly class GetArtAction implements SingleActionInterface
 {
     public function __construct(
-        private readonly StationRepository $stationRepo,
+        private Customization $customization
     ) {
     }
 
@@ -63,7 +63,7 @@ final class GetArtAction implements SingleActionInterface
         }
 
         return $response->withRedirect(
-            (string)$this->stationRepo->getDefaultAlbumArtUrl($station),
+            (string)$this->customization->getDefaultAlbumArtUrl($station),
             302
         );
     }

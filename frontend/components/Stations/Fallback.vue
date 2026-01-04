@@ -78,30 +78,30 @@ import {onMounted, ref} from "vue";
 import {useAxios} from "~/vendor/axios";
 import FormMarkup from "~/components/Form/FormMarkup.vue";
 import FormGroup from "~/components/Form/FormGroup.vue";
-import {getStationApiUrl} from "~/router";
-import {useNotify} from "~/functions/useNotify";
+import {useNotify} from "~/components/Common/Toasts/useNotify.ts";
 import {ApiUploadedRecordStatus} from "~/entities/ApiInterfaces.ts";
+import {useApiRouter} from "~/functions/useApiRouter.ts";
 
+const {getStationApiUrl} = useApiRouter();
 const apiUrl = getStationApiUrl('/fallback');
 
 const downloadUrl = ref<string | null>(null);
 
 const {axios} = useAxios();
 
-const relist = () => {
-    void axios.get<ApiUploadedRecordStatus>(apiUrl.value).then(({data}) => {
-        downloadUrl.value = data.url;
-    });
+const relist = async () => {
+    const {data} = await axios.get<ApiUploadedRecordStatus>(apiUrl.value);
+    downloadUrl.value = data.url;
 };
 
 onMounted(relist);
 
 const {notifySuccess} = useNotify();
 
-const deleteFallback = () => {
-    void axios.delete(apiUrl.value).then(() => {
-        notifySuccess();
-        relist();
-    });
+const deleteFallback = async () => {
+    await axios.delete(apiUrl.value);
+
+    notifySuccess();
+    await relist();
 };
 </script>

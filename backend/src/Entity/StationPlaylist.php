@@ -17,7 +17,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use OpenApi\Attributes as OA;
 use Stringable;
-use Symfony\Component\Serializer\Annotation as Serializer;
+use Symfony\Component\Serializer\Attribute as Serializer;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[
@@ -70,6 +70,12 @@ final class StationPlaylist implements
             200
         );
     }
+
+    #[
+        OA\Property(example: "A playlist containing my favorite songs"),
+        ORM\Column(type: 'text', nullable: true)
+    ]
+    public ?string $description = null;
 
     #[
         OA\Property(example: "default"),
@@ -160,7 +166,11 @@ final class StationPlaylist implements
     }
 
     #[
-        OA\Property(example: 3),
+        OA\Property(
+            description: "The relative weight of the playlist. Larger numbers play more often than playlists "
+            . "with lower number weights.",
+            example: 3,
+        ),
         ORM\Column(type: 'smallint')
     ]
     public int $weight = self::DEFAULT_WEIGHT {

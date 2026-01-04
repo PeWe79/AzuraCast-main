@@ -31,7 +31,7 @@
                     <div class="flex-fill">
                         <div class="input-group">
                             <span class="input-group-text">
-                                <icon :icon="IconSearch" />
+                                <icon-ic-search/>
                             </span>
                             <input
                                 v-model="searchPhrase"
@@ -51,7 +51,7 @@
                                 :title="$gettext('Refresh rows')"
                                 @click="onClickRefresh"
                             >
-                                <icon :icon="IconRefresh" />
+                                <icon-ic-refresh/>
                             </button>
 
                             <div
@@ -103,7 +103,7 @@
                                     data-bs-placement="left"
                                     :title="$gettext('Display fields')"
                                 >
-                                    <icon :icon="IconFilterList" />
+                                    <icon-ic-filter-list/>
                                     <span class="caret" />
                                 </button>
                                 <div class="dropdown-menu">
@@ -172,14 +172,15 @@
                             @click.stop="sort(column)"
                         >
                             <slot
-                                :name="'header('+column.key+')'"
+                                :name="`header(${column.key})`"
                                 v-bind="column"
                             >
                                 <div class="d-flex align-items-center">
                                     {{ column.label }}
 
                                     <template v-if="column.sortable && sortField?.key === column.key">
-                                        <icon :icon="(sortOrder === 'asc') ? IconArrowDropUp : IconArrowDropDown" />
+                                        <icon-ic-arrow-drop-up v-if="sortOrder === 'asc'"/>
+                                        <icon-ic-arrow-drop-down v-else/>
                                     </template>
                                 </div>
                             </slot>
@@ -247,7 +248,7 @@
                                 :class="column.class"
                             >
                                 <slot
-                                    :name="'cell('+column.key+')'"
+                                    :name="`cell(${column.key})`"
                                     :column="column"
                                     :item="row"
                                     :is-active="isActiveDetailRow(row)"
@@ -290,15 +291,13 @@
 </template>
 
 <script setup lang="ts" generic="Row extends DataTableRow = DataTableRow">
-import {filter, forEach, get, includes, indexOf, isEmpty, map, some} from "lodash";
-import Icon from "~/components/Common/Icon.vue";
+import {filter, forEach, get, isEmpty, some} from "es-toolkit/compat";
 import {computed, ref, shallowRef, toRaw, watch} from "vue";
 import {watchDebounced} from "@vueuse/core";
 import FormMultiCheck from "~/components/Form/FormMultiCheck.vue";
 import FormCheckbox from "~/components/Form/FormCheckbox.vue";
 import Pagination from "~/components/Common/Pagination.vue";
 import useOptionalStorage from "~/functions/useOptionalStorage";
-import {IconArrowDropDown, IconArrowDropUp, IconFilterList, IconRefresh, IconSearch} from "~/components/Common/icons";
 import {SimpleFormOptionInput} from "~/functions/objectToFormOptions.ts";
 import {
     DATATABLE_DEFAULT_CONTEXT,
@@ -306,6 +305,12 @@ import {
     DataTableItemProvider,
     DataTableRow
 } from "~/functions/useHasDatatable.ts";
+import {isString} from "es-toolkit";
+import IconIcArrowDropUp from "~icons/ic/baseline-arrow-drop-up";
+import IconIcArrowDropDown from "~icons/ic/baseline-arrow-drop-down";
+import IconIcFilterList from "~icons/ic/baseline-filter-list";
+import IconIcRefresh from "~icons/ic/baseline-refresh";
+import IconIcSearch from "~icons/ic/baseline-search";
 
 export interface DataTableField<Row extends DataTableRow = DataTableRow> {
     key: string,
@@ -349,6 +354,7 @@ const props = withDefaults(defineProps<DataTableProps<Row>>(), {
 });
 
 const slots = defineSlots<{
+    [key: `header(${string})`]: (props: DataTableField<Row>) => any,
     [key: `cell(${string})`]: (props: {
         column: DataTableField<Row>,
         item: Row,
@@ -392,7 +398,7 @@ const currentPage = ref<number>(DATATABLE_DEFAULT_CONTEXT.currentPage);
 const sortField = ref<DataTableField<Row> | null>(null);
 const sortOrder = ref<string | null>(null);
 
-const activeDetailsRow = shallowRef<Row>(null);
+const activeDetailsRow = shallowRef<Row | null>(null);
 
 watch(visibleItems, () => {
     selectedRows.value = [];
@@ -403,14 +409,14 @@ type RowField = DataTableField<Row>
 type RowFields = RowField[]
 
 const allFields = computed<RowFields>(() => {
-    return map(props.fields, (field: RowField): RowField => {
+    return props.fields.map((field: RowField): RowField => {
         return {
             isRowHeader: false,
             sortable: false,
             selectable: false,
             visible: true,
-            class: null,
-            formatter: null,
+            class: undefined,
+            formatter: undefined,
             sorter: (row: Row): string => get(row, field.key),
             ...field
         };
@@ -423,7 +429,7 @@ const selectableFields = computed<RowFields>(() => {
     });
 });
 
-const selectableFieldOptions = computed<SimpleFormOptionInput>(() => map(selectableFields.value, (field) => {
+const selectableFieldOptions = computed<SimpleFormOptionInput>(() => selectableFields.value.map((field) => {
     return {
         value: field.key,
         text: field.label
@@ -442,7 +448,7 @@ const settings = useOptionalStorage(
         sortBy: null,
         sortDesc: false,
         perPage: props.defaultPerPage,
-        visibleFieldKeys: map(defaultSelectableFields.value, (field) => field.key),
+        visibleFieldKeys: defaultSelectableFields.value.map((field) => field.key),
     },
     {
         mergeDefaults: true
@@ -456,11 +462,11 @@ const visibleFieldKeys = computed({
             return settingsKeys;
         }
 
-        return map(defaultSelectableFields.value, (field) => field.key);
+        return defaultSelectableFields.value.map((field) => field.key);
     },
     set: (newValue) => {
         if (isEmpty(newValue)) {
-            newValue = map(defaultSelectableFields.value, (field) => field.key);
+            newValue = defaultSelectableFields.value.map((field) => field.key);
         }
 
         settings.value.visibleFieldKeys = newValue;
@@ -510,7 +516,7 @@ const visibleFields = computed<DataTableField<Row>[]>(() => {
             return true;
         }
 
-        return includes(visibleFieldsKeysValue, field.key);
+        return visibleFieldsKeysValue.indexOf(field.key) !== -1;
     });
 });
 
@@ -576,12 +582,12 @@ const isAllChecked = computed<boolean>(() => {
     }
 
     return !some(visibleItems.value, (currentVisibleRow) => {
-        return indexOf(selectedRows.value, currentVisibleRow) < 0;
+        return selectedRows.value.indexOf(currentVisibleRow) === -1;
     });
 });
 
 const isRowChecked = (row: Row) => {
-    return indexOf(selectedRows.value, row) >= 0;
+    return selectedRows.value.indexOf(row) !== -1;
 };
 
 const columnCount = computed(() => {
@@ -612,7 +618,7 @@ const checkRow = (row: Row) => {
     const newSelectedRows = selectedRows.value.slice();
 
     if (isRowChecked(row)) {
-        const index = indexOf(newSelectedRows, row);
+        const index = newSelectedRows.indexOf(row);
         if (index >= 0) {
             newSelectedRows.splice(index, 1);
         }
@@ -646,7 +652,7 @@ const toggleDetails = (row: Row) => {
 };
 
 const responsiveClass = computed(() => {
-    if (typeof props.responsive === 'string') {
+    if (isString(props.responsive)) {
         return props.responsive;
     }
 
@@ -654,7 +660,7 @@ const responsiveClass = computed(() => {
 });
 
 const getColumnValue = (field: DataTableField<Row>, row: Row): string => {
-    const columnValue = get(row, field.key, null);
+    const columnValue = get(row, field.key, '');
 
     return (field.formatter)
         ? field.formatter(columnValue, field.key, row)

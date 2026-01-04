@@ -16,7 +16,8 @@
                         class="btn btn-dark"
                         @click="doChangePassword"
                     >
-                        <icon :icon="IconVpnKey" />
+                        <icon-ic-vpn-key/>
+
                         <span>
                             {{ $gettext('Change Password') }}
                         </span>
@@ -26,7 +27,7 @@
         </template>
 
         <loading :loading="securityLoading">
-            <div class="card-body">
+            <div class="card-body" v-if="security">
                 <h5>
                     {{ $gettext('Two-Factor Authentication') }}
                     <enabled-badge :enabled="security.two_factor_enabled"/>
@@ -45,7 +46,8 @@
                         class="btn btn-danger"
                         @click="disableTwoFactor"
                     >
-                        <icon :icon="IconLockOpen" />
+                        <icon-ic-lock-open/>
+
                         <span>
                             {{ $gettext('Disable Two-Factor') }}
                         </span>
@@ -56,7 +58,7 @@
                         class="btn btn-success"
                         @click="enableTwoFactor"
                     >
-                        <icon :icon="IconLock" />
+                        <icon-ic-lock/>
                         <span>
                             {{ $gettext('Enable Two-Factor') }}
                         </span>
@@ -82,7 +84,8 @@
                     class="btn btn-primary"
                     @click="doAddPasskey"
                 >
-                    <icon :icon="IconAdd" />
+                    <icon-ic-add/>
+
                     <span>
                         {{ $gettext('Add New Passkey') }}
                     </span>
@@ -125,16 +128,12 @@
 </template>
 
 <script setup lang="ts">
-
-import {IconAdd, IconLock, IconLockOpen, IconVpnKey} from "~/components/Common/icons.ts";
 import CardPage from "~/components/Common/CardPage.vue";
 import EnabledBadge from "~/components/Common/Badges/EnabledBadge.vue";
-import Icon from "~/components/Common/Icon.vue";
 import Loading from "~/components/Common/Loading.vue";
 import AccountTwoFactorModal from "~/components/Account/TwoFactorModal.vue";
 import AccountChangePasswordModal from "~/components/Account/ChangePasswordModal.vue";
 import {useAxios} from "~/vendor/axios.ts";
-import {getApiUrl} from "~/router.ts";
 import {useTemplateRef} from "vue";
 import useConfirmAndDelete from "~/functions/useConfirmAndDelete.ts";
 import {useTranslate} from "~/vendor/gettext.ts";
@@ -144,9 +143,15 @@ import {ApiAccountTwoFactorStatus} from "~/entities/ApiInterfaces.ts";
 import {useApiItemProvider} from "~/functions/dataTable/useApiItemProvider.ts";
 import {QueryKeys} from "~/entities/Queries.ts";
 import {useQuery} from "@tanstack/vue-query";
+import IconIcAdd from "~icons/ic/baseline-add";
+import IconIcLock from "~icons/ic/baseline-lock";
+import IconIcLockOpen from "~icons/ic/baseline-lock-open";
+import IconIcVpnKey from "~icons/ic/baseline-vpn-key";
+import {useApiRouter} from "~/functions/useApiRouter.ts";
 
 const {axios} = useAxios();
 
+const {getApiUrl} = useApiRouter();
 const twoFactorUrl = getApiUrl('/frontend/account/two-factor');
 
 const {

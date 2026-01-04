@@ -1,29 +1,18 @@
 <template>
     <div class="navdrawer-header offcanvas-header">
-        <div class="d-flex align-items-center">
-            <router-link
-                :to="{ name: 'stations:index' }"
-                class="navbar-brand px-0 flex-fill"
+        <router-link
+            :to="{ name: 'stations:index' }"
+            class="navbar-brand"
+        >
+            {{ name }}
+            <div
+                id="station-time"
+                class="fs-6"
+                :title="$gettext('Station Time')"
             >
-                {{ name }}
-                <div
-                    id="station-time"
-                    class="fs-6"
-                    :title="$gettext('Station Time')"
-                >
-                    {{ clock }}
-                </div>
-            </router-link>
-
-            <router-link
-                v-if="userAllowedForStation(StationPermissions.Profile)"
-                :to="{ name: 'stations:profile:edit' }"
-                class="navbar-brand ms-0 flex-shrink-0"
-            >
-                <icon :icon="IconEdit" />
-                <span class="visually-hidden">{{ $gettext('Edit Profile') }}</span>
-            </router-link>
-        </div>
+                {{ clock }}
+            </div>
+        </router-link>
     </div>
 
     <template v-if="userAllowedForStation(StationPermissions.Broadcasting)">
@@ -62,26 +51,23 @@
 
 <script setup lang="ts">
 import {ref} from "vue";
-import Icon from "~/components/Common/Icon.vue";
 import SidebarMenu from "~/components/Common/SidebarMenu.vue";
-import {useAzuraCastStation} from "~/vendor/azuracast";
-import {useIntervalFn} from "@vueuse/core";
+import {toRefs, useIntervalFn} from "@vueuse/core";
 import {useStationsMenu} from "~/components/Stations/menu";
-import {userAllowedForStation} from "~/acl";
-import {useAxios} from "~/vendor/axios.ts";
-import {getStationApiUrl} from "~/router.ts";
-import {IconEdit} from "~/components/Common/icons.ts";
 import useStationDateTimeFormatter from "~/functions/useStationDateTimeFormatter.ts";
 import {useLuxon} from "~/vendor/luxon.ts";
-import {useRestartEventBus} from "~/functions/useMayNeedRestart.ts";
-import {ApiStationRestartStatus, StationPermissions} from "~/entities/ApiInterfaces.ts";
+import {StationPermissions} from "~/entities/ApiInterfaces.ts";
+import {useStationData} from "~/functions/useStationQuery.ts";
+import {useUserAllowedForStation} from "~/functions/useUserallowedForStation.ts";
 
 const menuItems = useStationsMenu();
+const {userAllowedForStation} = useUserAllowedForStation();
 
-const {name, hasStarted, needsRestart: initialNeedsRestart} = useAzuraCastStation();
+const stationData = useStationData();
+const {name, hasStarted, needsRestart, timezone} = toRefs(stationData);
 
 const {DateTime} = useLuxon();
-const {now, formatDateTimeAsTime} = useStationDateTimeFormatter();
+const {now, formatDateTimeAsTime} = useStationDateTimeFormatter(timezone);
 
 const clock = ref('');
 
@@ -90,22 +76,5 @@ useIntervalFn(() => {
 }, 1000, {
     immediate: true,
     immediateCallback: true
-});
-
-const restartEventBus = useRestartEventBus();
-const restartStatusUrl = getStationApiUrl('/restart-status');
-const needsRestart = ref<boolean>(initialNeedsRestart);
-const {axios} = useAxios();
-
-restartEventBus.on((forceRestart: boolean): void => {
-    if (forceRestart) {
-        needsRestart.value = true;
-    } else {
-        void axios.get<Required<ApiStationRestartStatus>>(restartStatusUrl.value).then(
-            ({data}) => {
-                needsRestart.value = data.needs_restart;
-            }
-        );
-    }
 });
 </script>

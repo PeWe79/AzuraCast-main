@@ -81,7 +81,7 @@ final class StationBackendConfiguration extends AbstractArrayEntity
 
     #[OA\Property]
     public bool $use_manual_autodj = false {
-        set (bool|null $value) => Types::bool($value, false);
+        set (bool|null $value) => Types::bool($value);
     }
 
     protected const int DEFAULT_QUEUE_LENGTH = 3;
@@ -134,7 +134,7 @@ final class StationBackendConfiguration extends AbstractArrayEntity
 
     #[OA\Property]
     public bool $post_processing_include_live = false {
-        set (bool|string|null $value) => Types::bool($value, false);
+        set (bool|string|null $value) => Types::bool($value);
     }
 
     #[OA\Property]
@@ -270,12 +270,12 @@ final class StationBackendConfiguration extends AbstractArrayEntity
 
     #[OA\Property]
     public bool $hls_enable_on_public_player = false {
-        set (bool|string $value) => Types::bool($value, false, true);
+        set (bool|string|null $value) => Types::bool($value, false, true);
     }
 
     #[OA\Property]
     public bool $hls_is_default = false {
-        set (bool|string $value) => Types::bool($value, false, true);
+        set (bool|string|null $value) => Types::bool($value, false, true);
     }
 
     #[OA\Property]
@@ -288,6 +288,9 @@ final class StationBackendConfiguration extends AbstractArrayEntity
 
     #[OA\Property]
     public bool $write_playlists_to_liquidsoap = false;
+
+    #[OA\Property]
+    public bool $share_encoders = false;
 
     /*
      * Liquidsoap Custom Configuration Sections

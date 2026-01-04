@@ -10,7 +10,8 @@
             :disabled="!hasSelectedItems"
             @click="doDelete"
         >
-            <icon :icon="IconDelete" />
+            <icon-ic-delete/>
+
             <span>
                 {{ $gettext('Delete') }}
             </span>
@@ -19,16 +20,15 @@
 </template>
 
 <script setup lang="ts">
-import Icon from "~/components/Common/Icon.vue";
 import {useTranslate} from "~/vendor/gettext";
 import {useAxios} from "~/vendor/axios";
-import {IconDelete} from "~/components/Common/icons";
 import {computed, h, toRef, VNode} from "vue";
-import {forEach, map} from "lodash";
-import {useNotify} from "~/functions/useNotify.ts";
-import {useDialog} from "~/functions/useDialog.ts";
+import {forEach, map} from "es-toolkit/compat";
+import {useNotify} from "~/components/Common/Toasts/useNotify.ts";
+import {useDialog} from "~/components/Common/Dialogs/useDialog.ts";
 import {HasRelistEmit} from "~/functions/useBaseEditModal.ts";
 import {ApiGenericBatchResult} from "~/entities/ApiInterfaces.ts";
+import IconIcDelete from "~icons/ic/baseline-delete";
 
 const props = defineProps<{
     batchUrl: string,
@@ -76,38 +76,40 @@ const handleBatchResponse = (
     }
 }
 
-const doBatch = (
+const doBatch = async (
     action: BatchAction,
     successMessage: string,
     errorMessage: string
 ) => {
-    void axios.put<ApiGenericBatchResult>(props.batchUrl, {
+    const {data} = await axios.put<ApiGenericBatchResult>(props.batchUrl, {
         'do': action,
         'rows': map(props.selectedItems, 'id')
-    }).then(({data}) => {
-        handleBatchResponse(data, successMessage, errorMessage);
-        emit('relist');
     });
+
+    handleBatchResponse(data, successMessage, errorMessage);
+    emit('relist');
 };
 
 const {confirmDelete} = useDialog();
 
-const doDelete = () => {
-    void confirmDelete({
+const doDelete = async () => {
+    const {value} = await confirmDelete({
         title: $gettext(
             'Delete %{num} broadcasts?',
             {
                 num: String(props.selectedItems.length)
             }
         ),
-    }).then((result) => {
-        if (result.value) {
-            doBatch(
-                'delete',
-                $gettext('Broadcasts removed:'),
-                $gettext('Error removing broadcasts:')
-            );
-        }
     });
+
+    if (!value) {
+        return;
+    }
+
+    await doBatch(
+        'delete',
+        $gettext('Broadcasts removed:'),
+        $gettext('Error removing broadcasts:')
+    );
 };
 </script>

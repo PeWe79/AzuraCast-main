@@ -22,7 +22,7 @@
                 class="btn btn-primary"
                 @click="createApiKey"
             >
-                <icon :icon="IconAdd" />
+                <icon-ic-add/>
                 <span>
                     {{ $gettext('Add API Key') }}
                 </span>
@@ -57,26 +57,24 @@
 </template>
 
 <script setup lang="ts">
-
-import {IconAdd} from "~/components/Common/icons.ts";
+import IconIcAdd from "~icons/ic/baseline-add";
 import DataTable, {DataTableField} from "~/components/Common/DataTable.vue";
 import CardPage from "~/components/Common/CardPage.vue";
-import Icon from "~/components/Common/Icon.vue";
 import AccountApiKeyModal from "~/components/Account/ApiKeyModal.vue";
 import {useTemplateRef} from "vue";
 import useConfirmAndDelete from "~/functions/useConfirmAndDelete.ts";
 import {useTranslate} from "~/vendor/gettext.ts";
-import {getApiUrl} from "~/router.ts";
-import {DeepRequired} from "utility-types";
 import {ApiKey, HasLinks} from "~/entities/ApiInterfaces.ts";
 import {useApiItemProvider} from "~/functions/dataTable/useApiItemProvider.ts";
 import {QueryKeys} from "~/entities/Queries.ts";
+import {useApiRouter} from "~/functions/useApiRouter.ts";
 
+const {getApiUrl} = useApiRouter();
 const apiKeysApiUrl = getApiUrl('/frontend/account/api-keys');
 
 const {$gettext} = useTranslate();
 
-type Row = DeepRequired<ApiKey & HasLinks>
+type Row = Required<ApiKey & HasLinks>
 
 const apiKeyFields: DataTableField<Row>[] = [
     {

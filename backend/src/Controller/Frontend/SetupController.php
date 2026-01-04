@@ -13,7 +13,7 @@ use App\Exception\Http\NotLoggedInException;
 use App\Exception\ValidationException;
 use App\Http\Response;
 use App\Http\ServerRequest;
-use App\VueComponent\SettingsComponent;
+use App\Middleware\Auth\ApiAuth;
 use App\VueComponent\StationFormComponent;
 use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
@@ -29,8 +29,7 @@ final class SetupController
     public function __construct(
         private readonly RolePermissionRepository $permissionRepo,
         private readonly ValidatorInterface $validator,
-        private readonly StationFormComponent $stationFormComponent,
-        private readonly SettingsComponent $settingsComponent
+        private readonly StationFormComponent $stationFormComponent
     ) {
     }
 
@@ -132,20 +131,21 @@ final class SetupController
             return $response->withRedirect($request->getRouter()->named('setup:' . $currentStep));
         }
 
+        $this->addCsrf($request);
+
         $router = $request->getRouter();
 
         return $request->getView()->renderVuePage(
             response: $response,
             component: 'Setup/Station',
             id: 'setup-station',
+            layout: 'minimal',
             title: __('Create a New Radio Station'),
-            props: array_merge(
-                $this->stationFormComponent->getProps($request),
-                [
-                    'createUrl' => $router->named('api:admin:stations'),
-                    'continueUrl' => $router->named('setup:settings'),
-                ]
-            )
+            props: [
+                'formProps' => $this->stationFormComponent->getProps($request),
+                'createUrl' => $router->named('api:admin:stations'),
+                'continueUrl' => $router->named('setup:settings'),
+            ]
         );
     }
 
@@ -165,15 +165,17 @@ final class SetupController
             return $response->withRedirect($router->named('setup:' . $currentStep));
         }
 
+        $this->addCsrf($request);
+
         $router = $request->getRouter();
 
         return $request->getView()->renderVuePage(
             response: $response,
             component: 'Setup/Settings',
             id: 'setup-settings',
+            layout: 'minimal',
             title: __('System Settings'),
             props: [
-                ...$this->settingsComponent->getProps($request),
                 'continueUrl' => $router->named('dashboard'),
             ],
         );
@@ -189,7 +191,9 @@ final class SetupController
         ServerRequest $request,
         Response $response
     ): ResponseInterface {
-        $request->getFlash()->error('<b>' . __('Setup has already been completed!') . '</b>');
+        $request->getFlash()->error(
+            message: __('Setup has already been completed!')
+        );
 
         return $response->withRedirect($request->getRouter()->named('dashboard'));
     }
@@ -236,5 +240,15 @@ final class SetupController
 
         // Step 3: System Settings
         return 'settings';
+    }
+
+    private function addCsrf(ServerRequest $request): void
+    {
+        $view = $request->getView();
+
+        $globalProps = $view->getGlobalProps();
+
+        $csrf = $request->getCsrf();
+        $globalProps->apiCsrf = $csrf->generate(ApiAuth::API_CSRF_NAMESPACE);
     }
 }

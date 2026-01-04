@@ -8,9 +8,13 @@
         @hidden="onHidden"
     >
         <template v-if="listUrl">
-            <inline-player class="text-start bg-primary rounded mb-2 p-1" />
+            <inline-player
+                class="text-start bg-primary rounded mb-2 p-1"
+                :channel="StreamChannel.Modal"
+            />
 
             <broadcasts-modal-toolbar
+                v-if="batchUrl !== null"
                 :batch-url="batchUrl"
                 :selected-items="selectedItems"
                 @relist="() => refresh()"
@@ -27,14 +31,20 @@
             >
                 <template #cell(download)="row">
                     <template v-if="row.item.recording?.downloadUrl">
-                        <play-button :url="row.item.recording?.downloadUrl"/>
+                        <play-button
+                            :stream="{
+                                channel: StreamChannel.Modal,
+                                url: row.item.recording?.downloadUrl,
+                                title: $gettext('Streamer Broadcast')
+                            }"
+                        />
                         <a
                             class="name btn p-0 ms-2"
                             :href="row.item.recording?.downloadUrl"
                             target="_blank"
                             :title="$gettext('Download')"
                         >
-                            <icon :icon="IconDownload" />
+                            <icon-ic-cloud-download/>
                         </a>
                     </template>
                     <template v-else>
@@ -68,22 +78,21 @@
 import DataTable, {DataTableField} from "~/components/Common/DataTable.vue";
 import formatFileSize from "~/functions/formatFileSize";
 import InlinePlayer from "~/components/InlinePlayer.vue";
-import Icon from "~/components/Common/Icon.vue";
-import PlayButton from "~/components/Common/PlayButton.vue";
-import {computed, ref, shallowRef, useTemplateRef} from "vue";
+import PlayButton from "~/components/Common/Audio/PlayButton.vue";
+import {ref, shallowRef, useTemplateRef} from "vue";
 import {useTranslate} from "~/vendor/gettext";
-import {useNotify} from "~/functions/useNotify";
+import {useNotify} from "~/components/Common/Toasts/useNotify.ts";
 import {useAxios} from "~/vendor/axios";
 import Modal from "~/components/Common/Modal.vue";
-import {IconDownload} from "~/components/Common/icons";
 import {useHasModal} from "~/functions/useHasModal.ts";
-import {usePlayerStore, useProvidePlayerStore} from "~/functions/usePlayerStore.ts";
+import {StreamChannel, usePlayerStore} from "~/functions/usePlayerStore.ts";
 import useStationDateTimeFormatter from "~/functions/useStationDateTimeFormatter.ts";
 import BroadcastsModalToolbar from "~/components/Stations/Streamers/BroadcastsModalToolbar.vue";
-import {useDialog} from "~/functions/useDialog.ts";
+import {useDialog} from "~/components/Common/Dialogs/useDialog.ts";
 import {ApiStationStreamerBroadcast} from "~/entities/ApiInterfaces.ts";
 import {useApiItemProvider} from "~/functions/dataTable/useApiItemProvider.ts";
 import {QueryKeys, queryKeyWithStation} from "~/entities/Queries.ts";
+import IconIcCloudDownload from "~icons/ic/baseline-cloud-download";
 
 const streamerId = ref<number | null>(null);
 const listUrl = ref<string | null>(null);
@@ -93,7 +102,7 @@ const {$gettext} = useTranslate();
 
 const {formatIsoAsDateTime} = useStationDateTimeFormatter();
 
-type Row = ApiStationStreamerBroadcast;
+type Row = Required<ApiStationStreamerBroadcast>;
 
 const fields: DataTableField<Row>[] = [
     {
@@ -139,17 +148,13 @@ const fields: DataTableField<Row>[] = [
     }
 ];
 
-const listItemProvider = useApiItemProvider(
+const listItemProvider = useApiItemProvider<Row>(
     listUrl,
     queryKeyWithStation([
         QueryKeys.StationStreamers,
-    ], [
         'broadcasts',
         streamerId
-    ]),
-    {
-        enabled: computed(() => listUrl.value !== null),
-    }
+    ])
 );
 
 const refresh = () => {
@@ -160,23 +165,25 @@ const {confirmDelete} = useDialog();
 const {notifySuccess} = useNotify();
 const {axios} = useAxios();
 
-const selectedItems = shallowRef([]);
+const selectedItems = shallowRef<Row[]>([]);
 
 const onRowSelected = (items: Row[]) => {
     selectedItems.value = items;
 };
 
-const doDelete = (url: string) => {
-    void confirmDelete({
+const doDelete = async (url: string) => {
+    const {value} = await confirmDelete({
         title: $gettext('Delete Broadcast?'),
-    }).then((result) => {
-        if (result.value) {
-            void axios.delete(url).then((resp) => {
-                notifySuccess(resp.data.message);
-                refresh();
-            });
-        }
     });
+
+    if (!value) {
+        return;
+    }
+
+    const {data} = await axios.delete(url);
+
+    notifySuccess(data.message);
+    refresh();
 };
 
 const $modal = useTemplateRef('$modal');
@@ -189,8 +196,6 @@ const open = (newStreamerId: number, newListUrl: string, newBatchUrl: string) =>
 
     show();
 };
-
-useProvidePlayerStore('broadcasts');
 
 const {stop} = usePlayerStore();
 

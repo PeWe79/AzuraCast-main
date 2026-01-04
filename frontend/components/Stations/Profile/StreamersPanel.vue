@@ -1,25 +1,42 @@
 <template>
     <card-page header-id="hdr_streamers">
         <template #header="{id}">
-            <h3
-                :id="id"
-                class="card-title"
-            >
-                {{ $gettext('Streamers/DJs') }}
-                <enabled-badge :enabled="enableStreamers" />
-            </h3>
+            <div class="d-flex align-items-center">
+                <h3
+                    :id="id"
+                    class="card-title flex-fill my-0"
+                >
+                    {{ $gettext('Streamers/DJs') }}
+                </h3>
+                <div class="flex-shrink-0">
+                    <enabled-badge :enabled="stationData.enableStreamers"/>
+                </div>
+            </div>
         </template>
         <template
-            v-if="userAllowedForStation(StationPermissions.Streamers) || userAllowedForStation(StationPermissions.Profile)"
+            v-if="(stationData.enableStreamers && (stationData.enablePublicPages || userAllowedForStation(StationPermissions.Streamers))) || userAllowedForStation(StationPermissions.Profile)"
             #footer_actions
         >
-            <template v-if="enableStreamers">
+            <template v-if="stationData.enableStreamers">
+                <a
+                    v-if="stationData.enablePublicPages"
+                    :href="stationData.webDjUrl"
+                    target="_blank"
+                    class="btn btn-link text-secondary"
+                >
+                    <icon-ic-mic/>
+
+                    <span>
+                        {{ $gettext('Web DJ') }}
+                    </span>
+                </a>
                 <router-link
                     v-if="userAllowedForStation(StationPermissions.Streamers)"
                     class="btn btn-link text-primary"
                     :to="{name: 'stations:streamers:index'}"
                 >
-                    <icon :icon="IconSettings" />
+                    <icon-ic-settings/>
+
                     <span>
                         {{ $gettext('Manage') }}
                     </span>
@@ -30,7 +47,8 @@
                     class="btn btn-link text-danger"
                     @click="toggleStreamers"
                 >
-                    <icon :icon="IconClose" />
+                    <icon-ic-close/>
+
                     <span>
                         {{ $gettext('Disable') }}
                     </span>
@@ -43,7 +61,8 @@
                     class="btn btn-link text-success"
                     @click="toggleStreamers"
                 >
-                    <icon :icon="IconCheck" />
+                    <icon-ic-check/>
+
                     <span>
                         {{ $gettext('Enable') }}
                     </span>
@@ -54,27 +73,24 @@
 </template>
 
 <script setup lang="ts">
-import Icon from "~/components/Common/Icon.vue";
 import EnabledBadge from "~/components/Common/Badges/EnabledBadge.vue";
 import CardPage from "~/components/Common/CardPage.vue";
-import {userAllowedForStation} from "~/acl";
+import {useUserAllowedForStation} from "~/functions/useUserallowedForStation.ts";
 import useToggleFeature from "~/components/Stations/Profile/useToggleFeature";
-import {IconCheck, IconClose, IconSettings} from "~/components/Common/icons";
-import {toRef} from "vue";
+import {computed} from "vue";
 import {StationPermissions} from "~/entities/ApiInterfaces.ts";
+import {useStationData} from "~/functions/useStationQuery.ts";
+import IconIcCheck from "~icons/ic/baseline-check";
+import IconIcClose from "~icons/ic/baseline-close";
+import IconIcMic from "~icons/ic/baseline-mic";
+import IconIcSettings from "~icons/ic/baseline-settings";
 
-export interface ProfileStreamersPanelProps {
-    enableStreamers: boolean,
-}
+const stationData = useStationData();
 
-defineOptions({
-    inheritAttrs: false
-});
-
-const props = defineProps<ProfileStreamersPanelProps>();
+const {userAllowedForStation} = useUserAllowedForStation();
 
 const toggleStreamers = useToggleFeature(
     'enable_streamers',
-    toRef(props, 'enableStreamers')
+    computed(() => stationData.value.enableStreamers)
 );
 </script>

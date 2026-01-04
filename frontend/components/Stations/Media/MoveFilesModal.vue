@@ -15,7 +15,8 @@
                     :disabled="dirHistory.length === 0"
                     @click="pageBack"
                 >
-                    <icon :icon="IconChevronLeft"/>
+                    <icon-bi-chevron-left/>
+
                     <span>
                         {{ $gettext('Back') }}
                     </span>
@@ -45,7 +46,7 @@
                     <template #cell(name)="{item}">
                         <div class="is_dir d-flex align-items-center">
                             <span class="file-icon me-2">
-                                <icon :icon="IconFolder"/>
+                                <icon-ic-folder/>
                             </span>
 
                             <a
@@ -81,19 +82,19 @@
 
 <script setup lang="ts">
 import DataTable, {DataTableField} from "~/components/Common/DataTable.vue";
-import Icon from "~/components/Common/Icon.vue";
 import {computed, ref, useTemplateRef} from "vue";
 import {useTranslate} from "~/vendor/gettext";
 import {useAxios} from "~/vendor/axios";
 import Modal from "~/components/Common/Modal.vue";
-import {IconChevronLeft, IconFolder} from "~/components/Common/icons";
 import {useHasModal} from "~/functions/useHasModal.ts";
 import useHandleBatchResponse from "~/components/Stations/Media/useHandleBatchResponse.ts";
-import {MediaSelectedItems} from "~/components/Stations/Media.vue";
 import {HasRelistEmit} from "~/functions/useBaseEditModal.ts";
 import {useQuery} from "@tanstack/vue-query";
 import {QueryKeys, queryKeyWithStation} from "~/entities/Queries.ts";
 import {useQueryItemProvider} from "~/functions/dataTable/useQueryItemProvider.ts";
+import {MediaSelectedItems} from "~/components/Stations/Media.vue";
+import IconIcFolder from "~icons/ic/baseline-folder";
+import IconBiChevronLeft from "~icons/bi/chevron-left";
 
 const props = defineProps<{
     selectedItems: MediaSelectedItems,
@@ -137,9 +138,7 @@ const {handleBatchResponse} = useHandleBatchResponse();
 const directoriesQuery = useQuery({
     queryKey: queryKeyWithStation(
         [
-            QueryKeys.StationMedia
-        ],
-        [
+            QueryKeys.StationMedia,
             'directories',
             destinationDirectory
         ]
@@ -160,23 +159,25 @@ const directoriesQuery = useQuery({
 
 const directoryItemProvider = useQueryItemProvider(directoriesQuery);
 
-const doMove = () => {
-    void axios.put(props.batchUrl, {
-        'do': 'move',
-        'currentDirectory': props.currentDirectory,
-        'directory': destinationDirectory.value,
-        'files': props.selectedItems.files,
-        'dirs': props.selectedItems.directories
-    }).then(({data}) => {
+const doMove = async () => {
+    try {
+        const {data} = await axios.put(props.batchUrl, {
+            'do': 'move',
+            'currentDirectory': props.currentDirectory,
+            'directory': destinationDirectory.value,
+            'files': props.selectedItems.files,
+            'dirs': props.selectedItems.directories
+        });
+
         handleBatchResponse(
             data,
             $gettext('Files moved:'),
             $gettext('Error moving files:')
         );
-    }).finally(() => {
+    } finally {
         hide();
         emit('relist');
-    });
+    }
 };
 
 const enterDirectory = (path: string) => {

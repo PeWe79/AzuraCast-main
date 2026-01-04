@@ -23,7 +23,7 @@
                         :title="$gettext('Play')"
                         :aria-label="$gettext('Play')"
                     >
-                        <icon :icon="IconPlayCircle"/>
+                        <icon-ic-play-circle/>
                     </button>
                     <button
                         v-if="isPlaying && !isPaused"
@@ -33,7 +33,7 @@
                         :title="$gettext('Pause')"
                         :aria-label="$gettext('Pause')"
                     >
-                        <icon :icon="IconPauseCircle" />
+                        <icon-ic-pause-circle/>
                     </button>
                     <button
                         type="button"
@@ -42,7 +42,7 @@
                         :title="$gettext('Previous Track')"
                         :aria-label="$gettext('Previous Track')"
                     >
-                        <icon :icon="IconFastRewind" />
+                        <icon-ic-fast-rewind/>
                     </button>
                     <button
                         type="button"
@@ -51,7 +51,7 @@
                         :title="$gettext('Next Track')"
                         :aria-label="$gettext('Next Track')"
                     >
-                        <icon :icon="IconFastForward" />
+                        <icon-ic-fast-forward/>
                     </button>
                     <button
                         type="button"
@@ -60,7 +60,7 @@
                         :title="$gettext('Stop')"
                         :aria-label="$gettext('Stop')"
                     >
-                        <icon :icon="IconStop" />
+                        <icon-ic-stop/>
                     </button>
                     <button
                         type="button"
@@ -184,18 +184,20 @@
 </template>
 
 <script setup lang="ts">
-import Icon from "~/components/Common/Icon.vue";
 import VolumeSlider from "~/components/Public/WebDJ/VolumeSlider.vue";
 import formatTime from "~/functions/formatTime";
 import {computed, ref, watch} from "vue";
 import {useWebDjTrack} from "~/components/Public/WebDJ/useWebDjTrack";
 import {useTranslate} from "~/vendor/gettext";
-import {forEach} from "lodash";
 import {useInjectMixer} from "~/components/Public/WebDJ/useMixerValue";
 import {usePassthroughSync} from "~/components/Public/WebDJ/usePassthroughSync";
 import {TagLibProcessResult, useWebDjSource, WebDjFilePointer} from "~/components/Public/WebDJ/useWebDjSource";
 import {useInjectWebcaster} from "~/components/Public/WebDJ/useWebcaster";
-import {IconFastForward, IconFastRewind, IconPauseCircle, IconPlayCircle, IconStop} from "~/components/Common/icons";
+import IconIcFastForward from "~icons/ic/baseline-fast-forward";
+import IconIcFastRewind from "~icons/ic/baseline-fast-rewind";
+import IconIcPauseCircle from "~icons/ic/baseline-pause-circle";
+import IconIcPlayCircle from "~icons/ic/baseline-play-circle";
+import IconIcStop from "~icons/ic/baseline-stop";
 
 const props = defineProps<{
     id: string
@@ -238,7 +240,9 @@ const isSeeking = ref(false);
 
 const seekingPosition = computed({
     get: () => {
-        return (100.0 * (position.value / Number(duration.value)));
+        return (position.value !== null)
+            ? (100.0 * (position.value / Number(duration.value)))
+            : 0;
     },
     set: (val) => {
         if (!isSeeking.value || !source.value) {
@@ -282,7 +286,7 @@ const langHeader = computed(() => {
 const onFileSelected = (e: Event) => {
     const eventTarget = e.target as HTMLInputElement;
 
-    forEach(eventTarget.files, (file: File) => {
+    for (const file of eventTarget.files ?? []) {
         // @ts-expect-error Weird custom function from taglib. Don't worry about it.
         file.readTaglibMetadata((data: TagLibProcessResult) => {
             files.value.push({
@@ -291,7 +295,7 @@ const onFileSelected = (e: Event) => {
                 metadata: data.metadata || {title: '', artist: ''}
             });
         });
-    });
+    }
 }
 
 interface PlayOptions {

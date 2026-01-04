@@ -54,7 +54,7 @@
                 class="btn btn-sm btn-secondary"
                 @click="clearFilters"
             >
-                <icon :icon="IconClearAll" />
+                <icon-ic-clear-all/>
                 <span>
                     {{ $gettext('Clear Filters') }}
                 </span>
@@ -65,8 +65,7 @@
 
 <script setup lang="ts">
 import {ListenerFilters, ListenerTypeFilters} from "~/components/Stations/Reports/Listeners/listenerFilters.ts";
-import {IconClearAll} from "~/components/Common/icons.ts";
-import Icon from "~/components/Common/Icon.vue";
+import IconIcClearAll from "~icons/ic/baseline-clear-all";
 
 const filters = defineModel<ListenerFilters>('filters', {required: true});
 

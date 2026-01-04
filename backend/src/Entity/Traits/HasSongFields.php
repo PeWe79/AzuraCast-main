@@ -9,7 +9,7 @@ use App\Entity\Interfaces\SongInterface;
 use App\Entity\Song;
 use Doctrine\ORM\Mapping as ORM;
 use OpenApi\Attributes as OA;
-use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Serializer\Attribute as Serializer;
 
 #[OA\Schema(type: 'object')]
 trait HasSongFields
@@ -19,14 +19,14 @@ trait HasSongFields
     #[
         OA\Property,
         ORM\Column(length: 50),
-        Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
     public protected(set) string $song_id;
 
     #[
         OA\Property,
         ORM\Column(length: 512, nullable: true),
-        Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
     public ?string $text = null {
         get => $this->text;
@@ -36,27 +36,27 @@ trait HasSongFields
     #[
         OA\Property,
         ORM\Column(length: 255, nullable: true),
-        Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
     public ?string $artist = null {
         get => $this->artist;
-        set => $this->truncateNullableString($value, 255);
+        set => $this->truncateNullableString($value);
     }
 
     #[
         OA\Property,
         ORM\Column(length: 255, nullable: true),
-        Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
     public ?string $title = null {
         get => $this->title;
-        set => $this->truncateNullableString($value, 255);
+        set => $this->truncateNullableString($value);
     }
 
     #[
         OA\Property,
         ORM\Column(length: 200, nullable: true),
-        Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
+        Serializer\Groups([EntityGroupsInterface::GROUP_GENERAL, EntityGroupsInterface::GROUP_ALL])
     ]
     public ?string $album = null {
         get => $this->album;

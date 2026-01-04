@@ -16,7 +16,7 @@ final class StationPlaylistQueue
         description: 'ID of the StationPlaylistMedia record associating this track with the playlist',
         example: 1
     )]
-    public ?int $spm_id = null;
+    public int $spm_id;
 
     #[OA\Property(
         description: 'ID of the StationPlaylistMedia record associating this track with the playlist',
@@ -41,4 +41,9 @@ final class StationPlaylistQueue
         example: 'Aluko River'
     )]
     public string $title = '';
+
+    #[OA\Property(
+        description: 'The UNIX timestamp when this specific track was last played.',
+    )]
+    public ?int $last_played;
 }

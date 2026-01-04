@@ -5,7 +5,86 @@ release channel, you can take advantage of these new features and fixes.
 
 ## New Features/Changes
 
-- Liquidsoap is now updated to the Rolling Release build of 2.4.x. This includes a number of bug fixes for critical
+## Code Quality/Technical Changes
+
+- If you are mounting a filesystem that has folders or paths that are not accessible by AzuraCast, the software will 
+  skip these directories instead of them preventing regular operation.
+
+## Bug Fixes
+
+- Fixed a bug preventing setup from completing correctly.
+
+- Fixed a bug where UTC offsets that weren't a full hour (i.e. +6:30 UTC) were not displayed correctly in dropdowns.
+
+---
+
+# AzuraCast 0.23.2 (Dec 11, 2025)
+
+## New Features/Changes
+
+- The embeddable player widget builder has been greatly expanded and now supports custom colors, several preset layouts,
+  enabling or disabling components in the player, and saving/loading custom templates.
+
+- Administrators can now create login tokens for any account that function as "magic links" that complete the
+  authentication process in one step, as opposed to only being able to create password reset links. Both types of links
+  can be created from the Administration panel.
+
+## Code Quality/Technical Changes
+
+- If already installed, instances of Rocket Streaming Audio Server (RSAS) or Shoutcast can now be uninstalled from the
+  web interface.
+
+- Notifications on the dashboard homepage have unique IDs, meaning they can be individually targeted by CSS for styling
+  or other customization purposes.
+
+## Bug Fixes
+
+- Several bugs causing the Media Manager's cache to become out-of-date from the actual contents of the filesystem have
+  been resolved, so navigating around the station filesystem should accurately represent its contents in many more
+  cases.
+
+- Fixed a bug where live streamers/DJs with a disconnect delay would never be reactivated.
+
+- Fixed a bug preventing writing metadata changes to certain file formats.
+
+- Fixed a bug affecting uploading of custom branding assets.
+
+- Fixed a bug causing Icecast to have the incorrect amount of maximum listeners.
+
+- A low-security vulnerability affecting an internal API endpoint inside AzuraCast has been found and fixed in this
+  version. Updating is strongly recommended for users using SFTP to manage their local media.
+
+---
+
+# AzuraCast 0.23.1 (Oct 1, 2025)
+
+A minor bug fix addressing some pressing issues not fixed in 0.23.0.
+
+## Code Quality/Technical Changes
+
+- Stations that do not have the "Public Pages" feature enabled will no longer be visible to unauthenticated users via
+  any of the public-facing API endpoints. If you need to use features that are only available to public stations (i.e.
+  song requests), then the station should be made public.
+
+## Bug Fixes
+
+- Found and fixed a bug that caused users to see menu items that they didn't have permissions to manage. This didn't
+  allow them to modify the items in question (as this permission is managed server-side), just to see them on the menu.
+
+---
+
+# AzuraCast 0.23.0 (Sep 28, 2025)
+
+## New Features/Changes
+
+- **Share Encoders Between Streams**: You can now optionally enable an exciting new feature made possible by
+  Liquidsoap's FFmpeg integration: shared stream encoders. If enabled, if you have multiple streams that have the exact
+  same bitrate and format (i.e. 128kbps AAC for both an Icecast mount and HLS), both will share a single encoder. For
+  larger installations, this can dramatically improve CPU consumption. This feature is disabled by default to match the
+  experience of earlier versions; if you test it and encounter issues, try disabling it again. Enable the "Share
+  Encoders Between Streams" setting on the "AutoDJ" tab of your station's profile edit form.
+
+- **Liquidsoap 2.4.0**: Liquidsoap is now updated to version 2.4.0. This includes a number of bug fixes for critical
   issues, but also includes some breaking changes. Most of these changes will appear in the logs as warnings when
   starting up a station with custom Liquidsoap code. If you use custom Liquidsoap code, you should evaluate these
   warnings and make changes as needed.
@@ -14,17 +93,48 @@ release channel, you can take advantage of these new features and fixes.
   the playlist will have a folder icon next to it, and hovering over it will indicate which folder it was set from.
   Clearing and setting that playlist directly on the media won't work (as it would just get reassigned later).
 
+- Playlists can now have a description associated with them.
+
+- Entire podcasts can now be marked as "Explicit".
+
 ## Code Quality/Technical Changes
 
+- Our Docker image is now built on Debian Trixie (13), the newly released stable version of the Debian OS.
+
+- If a user submits a request too soon after their last one, they will be informed of how many minutes to wait.
+
 ## Bug Fixes
+
+- We have identified a bug that is causing the initial metadata push from live DJs to not transmit successfully. We have
+  temporarily disabled a function in our own code to resolve the issue, and will continue working with Liquidsoap to
+  resolve the issue fully.
+
+- A bug preventing Matomo analytics from registering correctly has been fixed.
+
+- Once-per-X-minutes playlists are again correctly written to Liquidsoap.
+
+- Fixed some forms not saving because of null values.
+
+---
+
+# AzuraCast 0.22.1 (Aug 29, 2025)
+
+This release backports several important bug fixes from our Rolling Release onto the stable channel.
+
+## Code Quality/Technical Changes
+
+- The hourly analytics process (that writes aggregate data used for charts, etc.) has been rewritten to be significantly
+  optimized for larger installations. This should keep the analytics task from overwhelming installations as easily.
+
+## Bug Fixes
+
+- A bug causing the update checker to fail and retry too frequently has been fixed.
 
 - Several issues caused by having "Plugin Mode" enabled have been resolved.
 
 - Fixed a bug preventing "Max Bitrate/Streams" settings on the Station form from saving correctly.
 
 - Making changes to frontend/backend station configuration will now properly trigger a "needs restart" flag.
-
-- Once-per-X-minutes playlists are again correctly written to Liquidsoap.
 
 ---
 

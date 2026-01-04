@@ -57,7 +57,8 @@
                     :href="item.links.public_feed"
                     target="_blank"
                 >
-                    <icon :icon="IconRss" />
+                    <icon-bi-rss-fill/>
+
                     {{ $gettext('RSS') }}
                 </a>
             </div>
@@ -69,7 +70,7 @@
         :provider="podcastsItemProvider"
         paginated
     >
-        <template #item="{item}: {item: ApiPodcast}">
+        <template #item="{item}">
             <div class="card mb-4">
                 <div class="card-header d-flex align-items-center">
                     <h5 class="card-title m-0 flex-fill">
@@ -118,29 +119,29 @@
 <script setup lang="ts">
 import AlbumArt from "~/components/Common/AlbumArt.vue";
 import DataTable, {DataTableField} from "~/components/Common/DataTable.vue";
-import {getStationApiUrl} from "~/router.ts";
 import {useTranslate} from "~/vendor/gettext.ts";
-import {IconRss} from "~/components/Common/icons.ts";
-import Icon from "~/components/Common/Icon.vue";
 import GridLayout from "~/components/Common/GridLayout.vue";
-import {ApiPodcast} from "~/entities/ApiInterfaces.ts";
 import {usePodcastGlobals} from "~/components/Public/Podcasts/usePodcastGlobals.ts";
 import {useApiItemProvider} from "~/functions/dataTable/useApiItemProvider.ts";
 import {QueryKeys} from "~/entities/Queries.ts";
+import {ApiPodcastRow} from "~/components/Public/Podcasts/usePodcastQuery.ts";
+import IconBiRssFill from "~icons/bi/rss-fill";
+import {useApiRouter} from "~/functions/useApiRouter.ts";
 
 const {groupLayout, stationId} = usePodcastGlobals();
 
+const {getStationApiUrl} = useApiRouter();
 const apiUrl = getStationApiUrl('/public/podcasts', stationId);
 
 const {$gettext} = useTranslate();
 
-const fields: DataTableField<ApiPodcast>[] = [
+const fields: DataTableField<ApiPodcastRow>[] = [
     {key: 'art', label: '', sortable: false, class: 'shrink pe-0'},
     {key: 'title', label: $gettext('Podcast'), sortable: true},
     {key: 'actions', label: $gettext('Actions'), sortable: false, class: 'shrink'}
 ];
 
-const podcastsItemProvider = useApiItemProvider<ApiPodcast>(
+const podcastsItemProvider = useApiItemProvider<ApiPodcastRow>(
     apiUrl,
     [
         QueryKeys.PublicPodcasts,

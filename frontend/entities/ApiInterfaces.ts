@@ -66,8 +66,6 @@ export enum HlsStreamProfiles {
   AacLowComplexity = "aac",
   AacHighEfficiencyV1 = "aac_he",
   AacHighEfficiencyV2 = "aac_he_v2",
-  AacLowDelay = "aac_ld",
-  AacEnhancedLowDelay = "aac_eld",
 }
 
 export enum FrontendAdapters {
@@ -215,6 +213,11 @@ export enum PlaylistOrders {
   Sequential = "sequential",
 }
 
+export enum LoginTokenTypes {
+  ResetPassword = "reset_password",
+  Login = "login",
+}
+
 export enum IpSources {
   Local = "local",
   XForwardedFor = "xff",
@@ -306,13 +309,38 @@ export interface ApiAdminDebugSyncTask {
   task: string;
   pattern: string | null;
   time: number;
-  nextRun: number;
+  nextRun: number | null;
   url: string;
 }
 
 export interface ApiAdminGeoLiteStatus {
   version: string | null;
   key: string | null;
+}
+
+export interface ApiAdminLogList {
+  globalLogs: ApiLogType[];
+  stationLogs: ApiAdminStationLogList[];
+}
+
+export interface ApiAdminNewLoginToken {
+  /** User ID or e-mail address. */
+  user: number | string;
+  type?: LoginTokenTypes | null;
+  /** @example "SSO Login" */
+  comment?: string | null;
+  expires_minutes?: number;
+}
+
+export interface ApiAdminNewLoginTokenResponse {
+  /** @example true */
+  success: boolean;
+  /** @example "Changes saved successfully." */
+  message: string;
+  /** @example "<b>Changes saved successfully.</b>" */
+  formatted_message: string;
+  record: UserLoginToken;
+  readonly links: Record<string, string>;
 }
 
 export interface ApiAdminPermission {
@@ -389,8 +417,8 @@ export type ApiAdminRole = HasLinks & {
 };
 
 export interface ApiAdminRolePermissions {
-  global?: GlobalPermissions[];
-  station?: ApiAdminRoleStationPermission[];
+  global: GlobalPermissions[];
+  station: ApiAdminRoleStationPermission[];
 }
 
 export interface ApiAdminRoleStationPermission {
@@ -492,6 +520,12 @@ export interface ApiAdminShoutcastStatus {
   version: string | null;
 }
 
+export interface ApiAdminStationLogList {
+  id: number;
+  name: string;
+  logs: ApiLogType[];
+}
+
 export interface ApiAdminStereoToolStatus {
   version: string | null;
 }
@@ -529,6 +563,58 @@ export interface ApiAdminUpdateDetails {
   rolling_updates_available?: number;
   /** Whether you can seamlessly move from the Rolling Release channel to Stable without issues. */
   can_switch_to_stable?: boolean;
+}
+
+export type ApiAdminUserWithDetails = User &
+  HasLinks & {
+    /**
+     * Whether this user record represents the currently logged-in user.
+     * @example true
+     */
+    is_me: boolean;
+  };
+
+export interface ApiAdminVueBackupProps {
+  isDocker: boolean;
+  storageLocations: Record<string, string>;
+}
+
+export interface ApiAdminVueCustomFieldProps {
+  autoAssignTypes: Record<string, string>;
+}
+
+export interface ApiAdminVuePermissionsProps {
+  stations: Record<string, string>;
+  globalPermissions: Record<string, string>;
+  stationPermissions: Record<string, string>;
+}
+
+export interface ApiAdminVueSettingsProps {
+  releaseChannel: string;
+}
+
+export interface ApiAdminVueStationsFormProps {
+  timezones: Record<string, string>;
+  countries: Record<string, string>;
+  isRsasInstalled: boolean;
+  isShoutcastInstalled: boolean;
+  isStereoToolInstalled: boolean;
+}
+
+export interface ApiAdminVueStationsProps {
+  formProps: ApiAdminVueStationsFormProps;
+  frontendTypes: object;
+  backendTypes: object;
+}
+
+export interface ApiAdminVueUpdateProps {
+  releaseChannel: string;
+  enableWebUpdates: boolean;
+  initialUpdateInfo: ApiAdminUpdateDetails | null;
+}
+
+export interface ApiAdminVueUsersProps {
+  roles: Record<string, string>;
 }
 
 export interface ApiBatchResult {
@@ -601,7 +687,7 @@ export type ApiFileList = HasLinks & {
 };
 
 export interface ApiFileListDir {
-  playlists?: any[];
+  playlists?: ApiStationMediaPlaylist[];
 }
 
 export interface ApiFormOption {
@@ -691,7 +777,14 @@ export type ApiLogType = HasLinks & {
   readonly tail: boolean;
 };
 
+export type ApiMediaBatchResult = ApiBatchResult & {
+  files: string[];
+  directories: string[];
+  responseRecord: any[] | null;
+};
+
 export interface ApiNotification {
+  id: string;
   title: string;
   body: string;
   type: FlashLevels;
@@ -863,6 +956,11 @@ export interface ApiNowPlayingStation {
    * @example true
    */
   is_public: boolean;
+  /**
+   * If the station has song requests enabled.
+   * @example true
+   */
+  requests_enabled: boolean;
   mounts: ApiNowPlayingStationMount[];
   remotes: ApiNowPlayingStationRemote[];
   /**
@@ -956,6 +1054,12 @@ export interface ApiNowPlayingStationRemote {
   listeners: ApiNowPlayingListeners;
 }
 
+export interface ApiNowPlayingVueProps {
+  stationShortName: string;
+  useStatic: boolean;
+  useSse: boolean;
+}
+
 export type ApiPodcast = HasLinks & {
   id?: string;
   storage_location_id?: number;
@@ -966,9 +1070,9 @@ export type ApiPodcast = HasLinks & {
   link?: string | null;
   description?: string;
   description_short?: string;
+  explicit?: boolean;
   is_enabled?: boolean;
-  /** An array containing podcast-specific branding configuration */
-  branding_config?: any[];
+  branding_config?: PodcastBrandingConfiguration;
   language?: string;
   language_name?: string;
   author?: string;
@@ -1136,7 +1240,7 @@ export interface ApiStationPlaylistQueue {
    * ID of the StationPlaylistMedia record associating this track with the playlist
    * @example 1
    */
-  spm_id?: number | null;
+  spm_id?: number;
   /**
    * ID of the StationPlaylistMedia record associating this track with the playlist
    * @example 1
@@ -1180,15 +1284,15 @@ export type ApiStationQueueDetailed = HasLinks & {
 };
 
 export interface ApiStationQuota {
-  used?: string;
-  used_bytes?: string;
-  used_percent?: number;
-  available?: string;
-  available_bytes?: string;
-  quota?: string | null;
-  quota_bytes?: string | null;
-  is_full?: boolean;
-  num_files?: number | null;
+  used: string;
+  used_bytes: string;
+  used_percent: number;
+  available: string;
+  available_bytes: string;
+  quota: string | null;
+  quota_bytes: string | null;
+  is_full: boolean;
+  num_files: number | null;
 }
 
 export interface ApiStationRequest {
@@ -1203,11 +1307,6 @@ export interface ApiStationRequest {
    */
   request_url?: string;
   song?: ApiSong;
-}
-
-export interface ApiStationRestartStatus {
-  has_started?: boolean;
-  needs_restart?: boolean;
 }
 
 export interface ApiStationSchedule {
@@ -1265,13 +1364,9 @@ export interface ApiStationSchedule {
 
 export interface ApiStationServiceStatus {
   /** @example true */
-  backend_running: boolean;
+  backendRunning: boolean;
   /** @example true */
-  frontend_running: boolean;
-  /** @example true */
-  station_has_started: boolean;
-  /** @example true */
-  station_needs_restart: boolean;
+  frontendRunning: boolean;
 }
 
 export interface ApiStationStreamer {
@@ -1294,6 +1389,51 @@ export interface ApiStationStreamerBroadcastRecording {
   path: string;
   size: number;
   downloadUrl: string;
+}
+
+export interface ApiStationsVueFilesProps {
+  initialPlaylists: {
+    /** @format int64 */
+    id: number;
+    name: string;
+  }[];
+  customFields: CustomField[];
+  validMimeTypes: string[];
+  supportsImmediateQueue: boolean;
+}
+
+export interface ApiStationsVuePodcastsProps {
+  languageOptions: Record<string, string>;
+  categoriesOptions: ApiFormNestedOptions;
+}
+
+export interface ApiStationsVueProfileProps {
+  nowPlayingProps: ApiNowPlayingVueProps;
+  publicPageEmbedUrl: string;
+  publicOnDemandEmbedUrl: string;
+  publicRequestEmbedUrl: string;
+  publicHistoryEmbedUrl: string;
+  publicScheduleEmbedUrl: string;
+  publicPodcastsEmbedUrl: string;
+  frontendAdminUri: string;
+  frontendAdminPassword: string;
+  frontendSourcePassword: string;
+  frontendRelayPassword: string;
+  frontendPort: number | null;
+}
+
+export interface ApiStationsVueSftpUsersProps {
+  connectionUrl: string;
+  connectionIp: string | null;
+  connectionPort: number;
+}
+
+export interface ApiStationsVueStreamersProps {
+  recordStreams: boolean;
+  connectionServerUrl: string;
+  connectionStreamPort: number | null;
+  connectionIp: string | null;
+  connectionDjMountPoint: string;
 }
 
 export interface ApiStatus {
@@ -1340,6 +1480,12 @@ export interface ApiTime {
   utc_time: string;
   /** @example "2012-12-25T16:30:00.000000Z" */
   utc_json: string;
+}
+
+export interface ApiToastNotification {
+  message: string;
+  title: string | null;
+  variant: FlashLevels;
 }
 
 export interface HasLinks {
@@ -1400,6 +1546,171 @@ export interface ApiUploadFile {
 export interface ApiUploadedRecordStatus {
   hasRecord: boolean;
   url: string | null;
+}
+
+export interface VueAppGlobals {
+  locale: string;
+  localeShort: string;
+  localeWithDashes: string;
+  timeConfig: object | null;
+  apiCsrf: string | null;
+  dashboardProps: VueDashboardGlobals | null;
+  user: VueUserGlobals | null;
+  notifications: ApiToastNotification[];
+  componentProps: any[] | null;
+}
+
+export interface VueDashboardGlobals {
+  instanceName: string;
+  homeUrl: string;
+  logoutUrl: string;
+  version: string;
+  isDocker: boolean;
+  platform: string;
+  showCharts: boolean;
+  showAlbumArt: boolean;
+  supportedLocales: Record<string, string>;
+  analyticsLevel: AnalyticsLevel;
+}
+
+export interface VueStationFeatures {
+  media: boolean;
+  sftp: boolean;
+  podcasts: boolean;
+  streamers: boolean;
+  webhooks: boolean;
+  requests: boolean;
+  mountPoints: boolean;
+  hlsStreams: boolean;
+  remoteRelays: boolean;
+  customLiquidsoapConfig: boolean;
+  autoDjQueue: boolean;
+}
+
+export interface VueStationGlobals {
+  id: number;
+  name: string | null;
+  shortName: string;
+  description: string | null;
+  isEnabled: boolean;
+  hasStarted: boolean;
+  needsRestart: boolean;
+  timezone: string;
+  offlineText: string | null;
+  maxBitrate: number;
+  maxMounts: number;
+  maxHlsStreams: number;
+  enablePublicPages: boolean;
+  publicPageUrl: string;
+  enableOnDemand: boolean;
+  onDemandUrl: string;
+  enableStreamers: boolean;
+  webDjUrl: string;
+  publicPodcastsUrl: string;
+  publicScheduleUrl: string;
+  enableRequests: boolean;
+  features: VueStationFeatures;
+  ipGeoAttribution: string;
+  backendType: BackendAdapters;
+  frontendType: FrontendAdapters;
+  canReload: boolean;
+  useManualAutoDj: boolean;
+}
+
+export interface VueUserGlobals {
+  id: number;
+  displayName: string | null;
+  permissions: ApiAdminRolePermissions;
+}
+
+export interface ApiWidgetCustomization {
+  /**
+   * Primary accent color (hex without #).
+   * @example "2196F3"
+   */
+  primaryColor?: string | null;
+  /**
+   * Background color (hex without #).
+   * @example "ffffff"
+   */
+  backgroundColor?: string | null;
+  /**
+   * Text color (hex without #).
+   * @example "000000"
+   */
+  textColor?: string | null;
+  /**
+   * Whether album art should be shown.
+   * @example true
+   */
+  showAlbumArt?: boolean;
+  /**
+   * Whether the widget should use rounded corners.
+   * @example false
+   */
+  roundedCorners?: boolean;
+  /**
+   * Whether autoplay should be requested.
+   * @example false
+   */
+  autoplay?: boolean;
+  /**
+   * Whether the volume controls are visible.
+   * @example true
+   */
+  showVolumeControls?: boolean;
+  /**
+   * Whether track progress is visible.
+   * @example true
+   */
+  showTrackProgress?: boolean;
+  /**
+   * Whether stream selection controls are visible.
+   * @example true
+   */
+  showStreamSelection?: boolean;
+  /**
+   * Whether the history button is visible.
+   * @example false
+   */
+  showHistoryButton?: boolean;
+  /**
+   * Whether the request button is visible.
+   * @example false
+   */
+  showRequestButton?: boolean;
+  /**
+   * Whether the playlist download button is visible.
+   * @example false
+   */
+  showPlaylistButton?: boolean;
+  /**
+   * Initial player volume (0-100).
+   * @min 0
+   * @max 100
+   * @example 75
+   */
+  initialVolume?: number;
+  /**
+   * Layout variant for the widget.
+   * @example "horizontal"
+   */
+  layout?: string;
+  /**
+   * Whether to show an "open popup" button.
+   * @example false
+   */
+  enablePopupPlayer?: boolean;
+  /**
+   * Whether to persist playback state across pages.
+   * @example false
+   */
+  continuousPlay?: boolean;
+  /**
+   * Additional CSS applied to the widget.
+   * @example ".radio-player-widget { border-radius: 12px; }"
+   */
+  customCss?: string | null;
 }
 
 export type ApiKey = HasSplitTokenFields & {
@@ -1494,6 +1805,11 @@ export interface ApiListenerLocation {
    * @example "-97.000000"
    */
   lon?: number | null;
+}
+
+export interface PodcastBrandingConfiguration {
+  public_custom_html?: string | null;
+  enable_op3_prefix?: boolean;
 }
 
 export type Relay = HasAutoIncrementId & {
@@ -1894,6 +2210,7 @@ export interface StationBackendConfiguration {
   live_broadcast_text?: string;
   enable_auto_cue?: boolean;
   write_playlists_to_liquidsoap?: boolean;
+  share_encoders?: boolean;
   /** Custom Liquidsoap Configuration: Top Section */
   custom_config_top?: string | null;
   /** Custom Liquidsoap Configuration: Pre-Playlists Section */
@@ -2006,7 +2323,7 @@ export type StationMount = HasAutoIncrementId & {
   autodj_bitrate?: number | null;
   /** @example "https://custom-listen-url.example.com/stream.mp3" */
   custom_listen_url?: string | null;
-  frontend_config?: any[];
+  frontend_config?: string | null;
   /**
    * The most recent number of unique listeners.
    * @example 10
@@ -2022,6 +2339,8 @@ export type StationMount = HasAutoIncrementId & {
 export type StationPlaylist = HasAutoIncrementId & {
   /** @example "Test Playlist" */
   name?: string;
+  /** @example "A playlist containing my favorite songs" */
+  description?: string | null;
   type?: PlaylistTypes;
   source?: PlaylistSources;
   order?: PlaylistOrders;
@@ -2047,7 +2366,10 @@ export type StationPlaylist = HasAutoIncrementId & {
   play_per_minutes?: number;
   /** @example 15 */
   play_per_hour_minute?: number;
-  /** @example 3 */
+  /**
+   * The relative weight of the playlist. Larger numbers play more often than playlists with lower number weights.
+   * @example 3
+   */
   weight?: number;
   /** @example true */
   include_in_requests?: boolean;
@@ -2202,6 +2524,8 @@ export type StorageLocation = HasAutoIncrementId & {
    * @example "https://your-region.digitaloceanspaces.com"
    */
   s3Endpoint?: string | null;
+  /** @example false */
+  s3UsePathStyle?: boolean | null;
   /**
    * The optional Dropbox App Key.
    * @example ""
@@ -2295,4 +2619,15 @@ export type User = HasAutoIncrementId & {
   updated_at?: number;
   /** Role> */
   roles?: any[];
+};
+
+export type UserLoginToken = HasSplitTokenFields & {
+  user?: User;
+  type?: LoginTokenTypes;
+  /** @example "SSO Login" */
+  comment?: string | null;
+  /** @example 1640998800 */
+  created_at?: number;
+  /** @example 1640998800 */
+  expires_at?: number;
 };

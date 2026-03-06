@@ -5,7 +5,7 @@ info:
   license:
     name: 'GNU Affero General Public License v3.0 or later'
     url: 'https://www.gnu.org/licenses/agpl-3.0.txt'
-  version: 0.23.2
+  version: 0.23.3
 servers:
   -
     url: 'https://demo.azuracast.com/api'
@@ -70,6 +70,30 @@ paths:
                 type: array
                 items:
                   allOf: [{ $ref: '#/components/schemas/ApiKey' }, { $ref: '#/components/schemas/HasLinks' }]
+        '403':
+          $ref: '#/components/responses/AccessDenied'
+        '500':
+          $ref: '#/components/responses/GenericError'
+    post:
+      tags:
+        - 'Administration: General'
+      summary: 'Create a new API key for a specified user.'
+      operationId: adminCreateApiKey
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Api_Admin_NewApiKey'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Api_Account_NewApiKey' }
+                  - { $ref: '#/components/schemas/ApiKey' }
+                  - { $ref: '#/components/schemas/HasLinks' }
         '403':
           $ref: '#/components/responses/AccessDenied'
         '500':
@@ -6490,6 +6514,22 @@ components:
           items:
             $ref: '#/components/schemas/Api_Admin_StationLogList'
       type: object
+    Api_Admin_NewApiKey:
+      required:
+        - user
+      properties:
+        user:
+          description: 'User ID or e-mail address.'
+          anyOf:
+            -
+              type: integer
+              format: int64
+            -
+              type: string
+        comment:
+          type: string
+          example: 'Admin-generated API key'
+      type: object
     Api_Admin_NewLoginToken:
       required:
         - user
@@ -8068,6 +8108,10 @@ components:
           description: 'The song title.'
           type: string
           example: 'Aluko River'
+        last_played:
+          description: 'The UNIX timestamp when this specific track was last played.'
+          type: integer
+          nullable: true
       type: object
     Api_StationProfile:
       required:
@@ -9172,6 +9216,10 @@ components:
           type: string
           example: '*'
           nullable: true
+        enable_liquidsoap_editing:
+          description: 'Allow stations to manually edit Liquidsoap code.'
+          type: boolean
+          example: 'true'
         enable_static_nowplaying:
           description: 'Whether to use high-performance static JSON for Now Playing data updates.'
           type: boolean
@@ -9458,7 +9506,11 @@ components:
               type: boolean
               example: false
             enable_public_page:
-              description: 'Whether this station is visible as a public page and in a now-playing API response.'
+              description: "Whether this station's public pages (player, on-demand streaming, etc.) are visible to non-authenticated users."
+              type: boolean
+              example: true
+            enable_public_api:
+              description: "Whether the public-facing API endpoints (now playing, art, etc.) are visible to non-authenticated users. Automatically enabled if 'enable_public_page' is true."
               type: boolean
               example: true
             enable_on_demand:

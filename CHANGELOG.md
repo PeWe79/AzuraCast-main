@@ -5,6 +5,60 @@ release channel, you can take advantage of these new features and fixes.
 
 ## New Features/Changes
 
+## Code Quality/Technical Changes
+
+## Bug Fixes
+
+---
+
+# AzuraCast 0.23.6 (Apr 24, 2026)
+
+This release is solely to patch a number of reported security vulnerabilities in AzuraCast. A majority of these 
+vulnerabilities apply only to already-logged-in users, allowing them to access files or locations they normally
+shouldn't be able to access; if you're operating a multi-tenant installation of AzuraCast, updating is highly
+recommended.
+
+## Security/Bug Fixes
+
+- Improved the security for local media uploads to prevent intentional path traversal outside the station's media 
+  directory. This vulnerability only affected already logged-in users with permissions and did not allow anonymous
+  users to upload media at any point. 
+  [GHSA-vp2f-cqqp-478j](https://github.com/AzuraCast/AzuraCast/security/advisories/GHSA-vp2f-cqqp-478j)
+
+- Improved the protection around the Liquidsoap internal API endpoint (feedback, djon/djoff, etc).
+  [GHSA-4fm3-ggg2-c6qx](https://github.com/AzuraCast/AzuraCast/security/advisories/GHSA-4fm3-ggg2-c6qx)
+
+- Improved the security checks around the Media manager playback API endpoint.
+  [GHSA-qff7-q5fm-8p76](https://github.com/AzuraCast/AzuraCast/security/advisories/GHSA-qff7-q5fm-8p76)
+
+- Finished implementing fully escaped "raw strings" in Liquidsoap configuration.
+  [GHSA-q4ph-8x8g-95f8](https://github.com/AzuraCast/AzuraCast/security/advisories/GHSA-q4ph-8x8g-95f8)
+
+- The e-mail sent by the "Reset Password" function will now always use the "Base URL" configured in system settings,
+  instead of respecting the "Prefer Browser URL" setting, to avoid potential security hazards. You should always ensure
+  the "Base URL" system setting is configured correctly to avoid directing users to the wrong URL.
+  [GHSA-gv7r-3mr9-h5x8](https://github.com/AzuraCast/AzuraCast/security/advisories/GHSA-gv7r-3mr9-h5x8)
+
+---
+
+# AzuraCast 0.23.5 (Apr 20, 2026)
+
+This release is primarily to ship minor bug fixes and a new stable version of Liquidsoap, the AutoDJ software used by
+AzuraCast stations.
+
+## Code Quality/Technical Changes
+
+- Updated to Liquidsoap 2.4.4 stable, which fixes several performance issues.
+
+- Fine-tuned the indexes used on several analytics database tables, significantly improving their performance on 
+  stations with large datasets.
+
+---
+
+# AzuraCast 0.23.4 (Mar 8, 2026)
+
+## New Features/Changes
+
 - **New "Enable Public APIs" Setting on Stations**: We have separated the "Enable Public Pages" permission into one for
   public pages, and one for public-facing APIs. If the public pages setting is enabled, APIs are enabled by default.
   This allows stations to build third-party players without using our built-in public pages.
@@ -24,6 +78,12 @@ release channel, you can take advantage of these new features and fixes.
   by AzuraCast even when that isn't the case.
 
 ## Bug Fixes
+
+- Hardened the security of our Liquidsoap script generation by escaping parts of strings used by Liquidsoap that could
+  be interpolated to include other values from the running script or to execute console commands. While this would not
+  allow anonymous listeners to modify an installation, it could represent a significant security risk in multi-tenant (
+  i.e. reseller) environments. In those environments, it is also recommended to entirely disable Liquidsoap custom
+  script editing (as made possible in "New Features" above) for further increased security.
 
 - Improved cache invalidation when editing fields on the Media Manager page.
 
